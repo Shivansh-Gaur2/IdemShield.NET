@@ -2,7 +2,7 @@
 
 ## Compatibility
 
-IdemShield currently targets .NET 8 and supports ASP.NET Core applications using:
+IdemShield `0.2.0` targets .NET 8 and .NET 10 and supports ASP.NET Core applications using:
 
 - Redis through `StackExchange.Redis`.
 - SQL Server 2022 or a compatible SQL Server edition supporting `sp_getapplock` and `DATETIMEOFFSET`.
@@ -11,7 +11,7 @@ Compatibility claims are limited to environments exercised by CI or documented b
 
 ## Getting help
 
-- Use GitHub Discussions for usage questions and design conversations when Discussions are enabled.
+- Use [GitHub Discussions](https://github.com/Shivansh-Gaur2/IdemShield.NET/discussions) for usage questions and design conversations.
 - Open a GitHub issue for reproducible defects or documentation gaps.
 - Follow `SECURITY.md` for vulnerabilities.
 

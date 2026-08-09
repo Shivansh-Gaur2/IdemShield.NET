@@ -6,7 +6,7 @@ Thank you for helping improve IdemShield. Small, focused changes with tests and 
 
 Requirements:
 
-- .NET 8 SDK
+- .NET 8 and .NET 10 SDKs
 - Docker or compatible Redis and SQL Server instances for integration tests
 
 Restore, build, and run the unit tests:

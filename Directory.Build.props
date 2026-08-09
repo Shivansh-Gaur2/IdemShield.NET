@@ -5,7 +5,7 @@
 
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'IdemShield.AspNetCore' Or '$(MSBuildProjectName)' == 'IdemShield.Redis' Or '$(MSBuildProjectName)' == 'IdemShield.SqlServer'">
     <IsPackable>true</IsPackable>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Shivansh Gaur</Authors>
     <Company>Shivansh Gaur</Company>
     <Copyright>Copyright © 2026 Shivansh Gaur</Copyright>
@@ -16,7 +16,7 @@
     <RepositoryUrl>https://github.com/Shivansh-Gaur2/IdemShield.NET</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>See CHANGELOG.md for release details.</PackageReleaseNotes>
+    <PackageReleaseNotes>IdemShield 0.2.0 adds .NET 10 support, exact package-family dependencies, runtime and SQL startup hardening, expanded provider integration coverage, and stronger package validation. See CHANGELOG.md for details.</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Deterministic>true</Deterministic>
@@ -24,6 +24,8 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages\</PackageOutputPath>
   </PropertyGroup>
 

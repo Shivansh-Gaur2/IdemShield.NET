@@ -38,7 +38,7 @@ namespace IdemShield.Redis
             {
                 return null;
             }
-            return JsonSerializer.Deserialize<IdempotencyRecord>(json!);
+            return JsonSerializer.Deserialize<IdempotencyRecord>(json.ToString());
         }
 
         /// <inheritdoc/>
@@ -61,7 +61,7 @@ namespace IdemShield.Redis
             if (existingJson.IsNullOrEmpty)
                 return;
 
-            var record = JsonSerializer.Deserialize<IdempotencyRecord>(existingJson!)!;
+            var record = JsonSerializer.Deserialize<IdempotencyRecord>(existingJson.ToString())!;
             record.Status = IdempotencyStatus.Completed;
             record.ResponseStatusCode = statusCode;
             record.ResponseBody = body;

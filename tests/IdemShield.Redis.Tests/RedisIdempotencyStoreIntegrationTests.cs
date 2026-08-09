@@ -1,4 +1,5 @@
 using IdemShield.AspNetCore;
+using IdemShield.Tests;
 using IdemShield.Redis;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -11,8 +12,8 @@ public class RedisIdempotencyStoreIntegrationTests
     [Trait("Category", "Integration")]
     public async Task Store_round_trips_and_releases_an_idempotency_record()
     {
-        var connectionString = Environment.GetEnvironmentVariable("IDEMSHIELD_REDIS_TEST_CONNECTION");
-        if (string.IsNullOrWhiteSpace(connectionString))
+        var connectionString = IntegrationTestEnvironment.GetConnectionStringOrFailInCi("IDEMSHIELD_REDIS_TEST_CONNECTION");
+        if (connectionString is null)
         {
             return;
         }
@@ -59,5 +60,50 @@ public class RedisIdempotencyStoreIntegrationTests
         }
 
         Assert.Null(await store.GetAsync(key, CancellationToken.None));
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task Store_expires_records_using_the_redis_key_ttl()
+    {
+        var connectionString = IntegrationTestEnvironment.GetConnectionStringOrFailInCi("IDEMSHIELD_REDIS_TEST_CONNECTION");
+        if (connectionString is null)
+        {
+            return;
+        }
+        var key = $"redis-expiry-test-{Guid.NewGuid():N}";
+        var services = new ServiceCollection();
+        services.UseRedisStore(connectionString);
+        await using var provider = services.BuildServiceProvider();
+        var store = provider.GetRequiredService<IIdempotencyStore>();
+        var record = new IdempotencyRecord
+        {
+            IdempotencyKey = key,
+            RequestFingerprint = "redis-expiry-test",
+            Status = IdempotencyStatus.InProgress,
+            CreatedAt = DateTimeOffset.UtcNow,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMilliseconds(250)
+        };
+
+        try
+        {
+            Assert.True(await store.TryInsertInProgressAsync(record, CancellationToken.None));
+
+            for (var attempt = 0; attempt < 40; attempt++)
+            {
+                if (await store.GetAsync(key, CancellationToken.None) is null)
+                {
+                    return;
+                }
+
+                await Task.Delay(50);
+            }
+
+            Assert.Fail("Redis did not expire the idempotency record within two seconds.");
+        }
+        finally
+        {
+            await store.DeleteAsync(key, CancellationToken.None);
+        }
     }
 }

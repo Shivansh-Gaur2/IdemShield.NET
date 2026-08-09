@@ -44,14 +44,25 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set up .NET 8
-        uses: actions/setup-dotnet@v6
+      - name: Set up .NET 8 and .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+
+      - name: Resolve package version
+        shell: pwsh
+        run: |
+          $version = dotnet msbuild src/IdemShield.AspNetCore/IdemShield.AspNetCore.csproj -getProperty:PackageVersion -nologo
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Package version '$version' is not stable SemVer."
+          }
+          "PACKAGE_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Restore dependencies
         run: dotnet restore IdemShield.sln --locked-mode
@@ -72,16 +83,20 @@ jobs:
         shell: pwsh
         run: ./eng/audit-packages.ps1
 
+      - name: Validate documentation
+        shell: pwsh
+        run: ./eng/verify-docs.ps1
+
       - name: Pack NuGet packages
         run: dotnet pack IdemShield.sln --configuration Release --no-build --no-restore --output artifacts/packages
 
       - name: Validate packages and clean-consumer installation
         shell: pwsh
-        run: ./eng/verify-packages.ps1 -PackageDirectory artifacts/packages -Version 0.1.0
+        run: ./eng/verify-packages.ps1 -PackageDirectory artifacts/packages -Version $env:PACKAGE_VERSION
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: test-results
           path: artifacts/test-results/**/*.trx
@@ -89,7 +104,7 @@ jobs:
           retention-days: 14
 
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: nuget-packages
           path: artifacts/packages/*.*nupkg

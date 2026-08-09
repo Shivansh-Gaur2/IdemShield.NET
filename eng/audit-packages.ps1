@@ -1,10 +1,11 @@
 [CmdletBinding()]
 param(
-    [string]$Solution = 'IdemShield.sln'
+    [string]$Solution = 'IdemShield.sln',
+    [string]$DotNetCommand = 'dotnet'
 )
 
 $ErrorActionPreference = 'Stop'
-$auditOutput = & dotnet list $Solution package --vulnerable --include-transitive --format json --output-version 1
+$auditOutput = & $DotNetCommand list $Solution package --vulnerable --include-transitive --format json --output-version 1
 if ($LASTEXITCODE -ne 0) {
     throw 'NuGet vulnerability audit failed to run.'
 }

@@ -13,6 +13,8 @@ IdemShield places one middleware component between supported ASP.NET Core reques
 7. The endpoint runs only for the caller that creates that record.
 8. A successful endpoint invocation stores the response. An exception removes the in-progress record.
 
+Only replay-safe response metadata is stored. Cookie, authentication, server-generated, content-length, and hop-by-hop headers are excluded.
+
 ## Modules
 
 - `IdemShield.AspNetCore` owns request selection, fingerprinting, concurrency behavior, replay, configuration, and the provider contract.

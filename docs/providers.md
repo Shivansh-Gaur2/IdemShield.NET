@@ -10,7 +10,7 @@ Use one reachable Redis deployment for every application instance sharing an ide
 
 `IdemShield.SqlServer` stores records in `IdempotencyRecords`. Reads ignore expired records, and new insert attempts can replace an expired record with the same key.
 
-With automatic schema creation enabled, the application identity needs permission to create the table and index. Production environments that separate schema deployment from runtime access should disable `AutoCreateSchema` and deploy `src/IdemShield.SqlServer/Scripts/CreateIdempotencyTable.sql` through their normal migration process.
+With automatic schema creation enabled, the application identity needs permission to create the table and index and to acquire a SQL application lock. Concurrent application instances coordinate schema initialization before checking or creating the table. Production environments that separate schema deployment from runtime access should disable `AutoCreateSchema` and deploy `src/IdemShield.SqlServer/Scripts/CreateIdempotencyTable.sql` through their normal migration process.
 
 The cleanup worker acquires a zero-wait session-scoped application lock. Only the instance holding that lock deletes the next bounded batch of expired records.
 
