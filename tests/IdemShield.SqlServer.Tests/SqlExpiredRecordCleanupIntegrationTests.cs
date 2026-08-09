@@ -12,8 +12,8 @@ public class SqlExpiredRecordCleanupIntegrationTests
     [Trait("Category", "Integration")]
     public async Task Cleanup_removes_expired_records_without_removing_active_records()
     {
-        var connectionString = Environment.GetEnvironmentVariable("IDEMSHIELD_SQL_TEST_CONNECTION");
-        if (string.IsNullOrWhiteSpace(connectionString))
+        var connectionString = IntegrationTestEnvironment.GetConnectionStringOrFailInCi("IDEMSHIELD_SQL_TEST_CONNECTION");
+        if (connectionString is null)
         {
             return;
         }

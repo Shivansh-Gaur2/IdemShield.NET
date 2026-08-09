@@ -6,7 +6,7 @@ Security fixes are applied to the latest published `0.x` release and the `main` 
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a suspected vulnerability. Email `shivanshgaur28@gmail.com` with:
+Do not open a public issue for a suspected vulnerability. Prefer [GitHub private vulnerability reporting](https://github.com/Shivansh-Gaur2/IdemShield.NET/security/advisories/new), or email `shivanshgaur28@gmail.com` when GitHub reporting is unavailable. Include:
 
 - The affected package and version.
 - Reproduction steps or a minimal proof of concept.

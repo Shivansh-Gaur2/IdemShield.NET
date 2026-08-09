@@ -41,6 +41,53 @@ public class IdempotencyMiddlewareTests
     }
 
     [Fact]
+    public async Task Unsupported_method_with_an_idempotency_key_passes_through()
+    {
+        var executions = 0;
+        var middleware = new IdempotencyMiddleware(
+            context =>
+            {
+                executions++;
+                return context.Response.WriteAsync("processed");
+            },
+            new IdempotencyOptions());
+        var context = CreateContext("GET", "same-key", string.Empty);
+
+        await middleware.InvokeAsync(context, new InMemoryIdempotencyStore());
+
+        Assert.Equal(1, executions);
+        Assert.Equal("processed", await ReadResponseAsync(context));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Blank_idempotency_key_is_rejected(string key)
+    {
+        var middleware = new IdempotencyMiddleware(
+            context => context.Response.WriteAsync("should-not-run"),
+            new IdempotencyOptions());
+        var context = CreateContext("POST", key, "{}");
+
+        await middleware.InvokeAsync(context, new InMemoryIdempotencyStore());
+
+        Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Idempotency_key_longer_than_storage_limit_is_rejected()
+    {
+        var middleware = new IdempotencyMiddleware(
+            context => context.Response.WriteAsync("should-not-run"),
+            new IdempotencyOptions());
+        var context = CreateContext("POST", new string('k', 256), "{}");
+
+        await middleware.InvokeAsync(context, new InMemoryIdempotencyStore());
+
+        Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+    }
+
+    [Fact]
     public async Task Put_with_same_key_and_body_replays_first_response()
     {
         var executions = 0;
@@ -91,6 +138,31 @@ public class IdempotencyMiddlewareTests
         Assert.Equal("original", replay.Response.Headers["X-Result"]);
         Assert.Equal("done", await ReadResponseAsync(replay));
         Assert.Null(replay.Response.ContentLength);
+    }
+
+    [Fact]
+    public async Task Replay_excludes_cookie_authentication_and_server_headers()
+    {
+        var store = new InMemoryIdempotencyStore();
+        var middleware = new IdempotencyMiddleware(
+            context =>
+            {
+                context.Response.Headers["X-Result"] = "safe";
+                context.Response.Headers.SetCookie = "session=secret; HttpOnly";
+                context.Response.Headers.WWWAuthenticate = "Bearer realm=orders";
+                context.Response.Headers.Server = "internal-host";
+                return context.Response.WriteAsync("done");
+            },
+            new IdempotencyOptions());
+
+        await middleware.InvokeAsync(CreateContext("POST", "same-key", "{}"), store);
+        var replay = CreateContext("POST", "same-key", "{}");
+        await middleware.InvokeAsync(replay, store);
+
+        Assert.Equal("safe", replay.Response.Headers["X-Result"]);
+        Assert.False(replay.Response.Headers.ContainsKey("Set-Cookie"));
+        Assert.False(replay.Response.Headers.ContainsKey("WWW-Authenticate"));
+        Assert.False(replay.Response.Headers.ContainsKey("Server"));
     }
 
     [Fact]
@@ -153,6 +225,29 @@ public class IdempotencyMiddlewareTests
         first.Request.QueryString = new QueryString("?region=eu");
         var conflictingRequest = CreateContext("POST", "same-key", "{}");
         conflictingRequest.Request.QueryString = new QueryString("?region=us");
+
+        await middleware.InvokeAsync(first, store);
+        await middleware.InvokeAsync(conflictingRequest, store);
+
+        Assert.Equal(1, executions);
+        Assert.Equal(StatusCodes.Status422UnprocessableEntity, conflictingRequest.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Same_key_with_a_different_path_returns_unprocessable_entity()
+    {
+        var executions = 0;
+        var store = new InMemoryIdempotencyStore();
+        var middleware = new IdempotencyMiddleware(
+            context =>
+            {
+                executions++;
+                return context.Response.WriteAsync("processed");
+            },
+            new IdempotencyOptions());
+        var first = CreateContext("POST", "same-key", "{}");
+        var conflictingRequest = CreateContext("POST", "same-key", "{}");
+        conflictingRequest.Request.Path = "/payments";
 
         await middleware.InvokeAsync(first, store);
         await middleware.InvokeAsync(conflictingRequest, store);

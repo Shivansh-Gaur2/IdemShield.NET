@@ -113,7 +113,7 @@ namespace IdemShield.AspNetCore
                 var responseBodyText = await new StreamReader(bufferStream).ReadToEndAsync();
 
                 var headersJson = System.Text.Json.JsonSerializer.Serialize(context.Response.Headers
-                    .Where(header => !IsDerivedOrHopByHopHeader(header.Key))
+                    .Where(header => !IsNonReplayableHeader(header.Key))
                     .ToDictionary(header => header.Key, header => header.Value.ToString()));
 
                 await store.UpdateAsCompletedAsync(key, context.Response.StatusCode, responseBodyText, headersJson, context.RequestAborted);
@@ -153,8 +153,15 @@ namespace IdemShield.AspNetCore
             await context.Response.WriteAsync(record.ResponseBody ?? string.Empty);
         }
 
-        private static bool IsDerivedOrHopByHopHeader(string headerName) =>
+        private static bool IsNonReplayableHeader(string headerName) =>
             headerName.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Date", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Server", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Set-Cookie", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Set-Cookie2", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("WWW-Authenticate", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Authentication-Info", StringComparison.OrdinalIgnoreCase) ||
+            headerName.Equals("Proxy-Authentication-Info", StringComparison.OrdinalIgnoreCase) ||
             headerName.Equals("Connection", StringComparison.OrdinalIgnoreCase) ||
             headerName.Equals("Keep-Alive", StringComparison.OrdinalIgnoreCase) ||
             headerName.Equals("Proxy-Authenticate", StringComparison.OrdinalIgnoreCase) ||

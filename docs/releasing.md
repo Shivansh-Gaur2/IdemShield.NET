@@ -20,15 +20,18 @@ The release workflow exchanges GitHub's OpenID Connect identity for a short-live
 
 ## Prepare a release
 
-1. Move the relevant entries from `[Unreleased]` in `CHANGELOG.md` to a version heading with the release date.
-2. Confirm that the three package IDs are owned by the intended NuGet account.
-3. Run the Release build, full test suite, package verifier, and vulnerability audit locally.
-4. Merge the release commit into protected `main` and wait for all required checks to pass.
-5. Create an annotated `vMAJOR.MINOR.PATCH` tag from that exact `main` commit and push the tag to GitHub.
-6. Run the **Release packages** workflow from `main`, enter the tag's exact `MAJOR.MINOR.PATCH` version, and leave publication disabled for a validation-only rehearsal. The workflow checks out the existing tag and rejects tags that are not on `main`.
-7. Review the generated artifacts.
-8. Run the workflow again with `publish_to_nuget` enabled and approve the `nuget` environment deployment.
+1. Set the shared package `Version` and release-specific `PackageReleaseNotes` in `Directory.Build.props`.
+2. Move the relevant entries from `[Unreleased]` in `CHANGELOG.md` to the same version heading with the release date, and update comparison links.
+3. Update installation examples and version-specific documentation.
+4. Set `PackageValidationBaselineVersion` to the latest published version. Review every compatibility diagnostic; suppress only intentional, documented pre-`1.0.0` changes.
+5. Confirm that the three package IDs are owned by the intended NuGet account.
+6. Run the Release build, full real-provider test suite, documentation verifier, package verifier, and vulnerability audit locally.
+7. Merge the release commit into protected `main` and wait for all required checks to pass.
+8. Create an annotated `vMAJOR.MINOR.PATCH` tag from that exact `main` commit and push the tag to GitHub.
+9. Run the **Release packages** workflow from `main`, enter the tag's exact `MAJOR.MINOR.PATCH` version, and leave publication disabled for a validation-only rehearsal. The workflow checks out the existing tag, verifies the central project version, and rejects tags that are not on `main`.
+10. Review the generated packages, symbol packages, dependency ranges, framework assets, and consumer validation.
+11. Run the workflow again with `publish_to_nuget` enabled and approve the `nuget` environment deployment.
 
-The publishing job pushes all three packages, creates the matching `vMAJOR.MINOR.PATCH` GitHub release, attaches package artifacts, and uses the version section from `CHANGELOG.md` as release notes.
+The publishing job pushes all three packages, creates the matching `vMAJOR.MINOR.PATCH` GitHub release, attaches package artifacts, and uses the version section from `CHANGELOG.md` as release notes. After publication, verify all three NuGet registration feeds and restore the packages into clean applications for every supported target framework.
 
 Package publication is immutable. Do not reuse a version after it has been pushed to NuGet.

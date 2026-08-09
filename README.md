@@ -2,35 +2,36 @@
 
 [![CI](https://github.com/Shivansh-Gaur2/IdemShield.NET/actions/workflows/ci.yml/badge.svg)](https://github.com/Shivansh-Gaur2/IdemShield.NET/actions/workflows/ci.yml)
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Reliable idempotency middleware for ASP.NET Core. IdemShield lets clients safely retry `POST`, `PUT`, and `PATCH` requests without repeating completed side effects.
 
-> **Release status:** `0.1.0` preview. The package artifacts are validated in CI but are not considered publicly released until the matching NuGet packages and GitHub release exist.
+> **Release status:** `0.2.0` public preview. The packages are published on NuGet and validated for .NET 8 and .NET 10. The API and persistence contract may still evolve before `1.0.0`.
 
 ## Packages
 
-| Package | Purpose |
-|---|---|
-| `IdemShield.AspNetCore` | Middleware, configuration, and storage abstractions |
-| `IdemShield.Redis` | Distributed Redis-backed store with native record expiry |
-| `IdemShield.SqlServer` | SQL Server store with coordinated background expiry cleanup |
+| Package | Version | Purpose |
+|---|---|---|
+| [`IdemShield.AspNetCore`](https://www.nuget.org/packages/IdemShield.AspNetCore) | [![NuGet](https://img.shields.io/nuget/v/IdemShield.AspNetCore.svg)](https://www.nuget.org/packages/IdemShield.AspNetCore) | Middleware, configuration, and storage abstractions |
+| [`IdemShield.Redis`](https://www.nuget.org/packages/IdemShield.Redis) | [![NuGet](https://img.shields.io/nuget/v/IdemShield.Redis.svg)](https://www.nuget.org/packages/IdemShield.Redis) | Distributed Redis-backed store with native record expiry |
+| [`IdemShield.SqlServer`](https://www.nuget.org/packages/IdemShield.SqlServer) | [![NuGet](https://img.shields.io/nuget/v/IdemShield.SqlServer.svg)](https://www.nuget.org/packages/IdemShield.SqlServer) | SQL Server store with coordinated background expiry cleanup |
 
-All packages target .NET 8 and include symbols, XML documentation, the license expression, repository metadata, and this README.
+All packages target .NET 8 and .NET 10 and include symbols, XML documentation, the license expression, repository metadata, and this README. Provider packages require the matching core package version.
 
 ## Install
 
-Install the ASP.NET Core package and one provider after the `0.1.0` packages are published:
+Install the ASP.NET Core package and one provider:
 
 ```bash
-dotnet add package IdemShield.AspNetCore --version 0.1.0
-dotnet add package IdemShield.SqlServer --version 0.1.0
+dotnet add package IdemShield.AspNetCore --version 0.2.0
+dotnet add package IdemShield.SqlServer --version 0.2.0
 ```
 
 For Redis, replace the second command with:
 
 ```bash
-dotnet add package IdemShield.Redis --version 0.1.0
+dotnet add package IdemShield.Redis --version 0.2.0
 ```
 
 ## 60-second setup
@@ -110,6 +111,7 @@ The cleanup worker runs immediately and then at the configured interval. Multipl
 - An in-progress request returns `409 Conflict` by default, or can poll for the completed result.
 - If endpoint execution throws, the in-progress record is removed so a later retry can run.
 - Completed responses replay the status code, body, content type, and safe application headers.
+- Cookie, authentication, server-generated, content-length, and hop-by-hop headers are never persisted for replay.
 - The default record lifetime is 24 hours.
 
 Scope keys for tenant-aware or user-aware APIs:
@@ -129,6 +131,7 @@ builder.Services.AddIdempotency(options =>
 - SQL automatic schema creation requires DDL permission during application startup. Disable it where deployment tooling owns schema changes.
 - Store availability is part of the request path. Apply normal Redis or SQL Server resilience, monitoring, and capacity practices.
 - Idempotency prevents duplicate execution only for requests routed through this middleware and sharing the same backing store and key scope.
+- The endpoint's business transaction and the IdemShield record are not one atomic transaction. Applications requiring that guarantee must design an application-level transactional boundary.
 
 See the focused documentation:
 
@@ -141,7 +144,7 @@ See the focused documentation:
 
 ## Project health
 
-Every push and pull request builds the solution in Release mode, runs unit and real-provider integration tests, creates all three NuGet packages, validates package contents, audits dependencies, and compiles a clean consumer application from the generated packages.
+Every push and pull request builds the solution in Release mode, runs unit and real-provider integration tests, creates all three NuGet packages, validates package contents and public API compatibility, audits dependencies, validates documentation links, and compiles clean .NET 8 and .NET 10 consumer applications from the generated packages.
 
 Security reports should follow [SECURITY.md](SECURITY.md). For support and compatibility expectations, see [SUPPORT.md](SUPPORT.md).
 

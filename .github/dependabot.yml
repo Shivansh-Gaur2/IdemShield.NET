@@ -5,8 +5,14 @@ updates:
     schedule:
       interval: weekly
     groups:
-      nuget-dependencies:
+      compatible-production-dependencies:
         patterns: ['*']
+        dependency-type: production
+        update-types: ['minor', 'patch']
+      compatible-development-dependencies:
+        patterns: ['*']
+        dependency-type: development
+        update-types: ['minor', 'patch']
   - package-ecosystem: github-actions
     directory: /
     schedule:
