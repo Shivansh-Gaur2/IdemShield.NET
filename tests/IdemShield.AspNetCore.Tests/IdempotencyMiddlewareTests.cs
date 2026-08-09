@@ -165,6 +165,41 @@ public class IdempotencyMiddlewareTests
         Assert.False(replay.Response.Headers.ContainsKey("Server"));
     }
 
+    [Theory]
+    [InlineData("Content-Length")]
+    [InlineData("Date")]
+    [InlineData("Server")]
+    [InlineData("Set-Cookie")]
+    [InlineData("Set-Cookie2")]
+    [InlineData("WWW-Authenticate")]
+    [InlineData("Authentication-Info")]
+    [InlineData("Proxy-Authentication-Info")]
+    [InlineData("Connection")]
+    [InlineData("Keep-Alive")]
+    [InlineData("Proxy-Authenticate")]
+    [InlineData("Proxy-Authorization")]
+    [InlineData("TE")]
+    [InlineData("Trailer")]
+    [InlineData("Transfer-Encoding")]
+    [InlineData("Upgrade")]
+    public async Task Replay_excludes_every_non_replayable_header(string headerName)
+    {
+        var store = new InMemoryIdempotencyStore();
+        var middleware = new IdempotencyMiddleware(
+            context =>
+            {
+                context.Response.Headers[headerName] = "blocked";
+                return context.Response.WriteAsync("done");
+            },
+            new IdempotencyOptions());
+
+        await middleware.InvokeAsync(CreateContext("POST", $"header-{headerName}", "{}"), store);
+        var replay = CreateContext("POST", $"header-{headerName}", "{}");
+        await middleware.InvokeAsync(replay, store);
+
+        Assert.False(replay.Response.Headers.ContainsKey(headerName));
+    }
+
     [Fact]
     public async Task Key_selector_can_scope_identical_client_keys_to_different_tenants()
     {

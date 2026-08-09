@@ -1,4 +1,5 @@
 using IdemShield.AspNetCore;
+using IdemShield.Tests;
 using IdemShield.SqlServer;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ public class SqlIdempotencyStoreIntegrationTests
         {
             return;
         }
-        var store = CreateStore(connectionString);
+        var store = EnsureSchemaAndCreateStore(connectionString);
         var key = $"sql-store-test-{Guid.NewGuid():N}";
         var record = CreateRecord(key, DateTimeOffset.UtcNow.AddMinutes(5));
 
@@ -60,7 +61,7 @@ public class SqlIdempotencyStoreIntegrationTests
         {
             return;
         }
-        var store = CreateStore(connectionString);
+        var store = EnsureSchemaAndCreateStore(connectionString);
         var key = $"sql-expired-replacement-{Guid.NewGuid():N}";
 
         try
@@ -90,7 +91,7 @@ public class SqlIdempotencyStoreIntegrationTests
         {
             return;
         }
-        var store = CreateStore(connectionString);
+        var store = EnsureSchemaAndCreateStore(connectionString);
         var key = $"sql-concurrent-claim-{Guid.NewGuid():N}";
 
         try
@@ -150,7 +151,7 @@ public class SqlIdempotencyStoreIntegrationTests
         }
     }
 
-    private static SqlIdempotencyStore CreateStore(string connectionString)
+    private static SqlIdempotencyStore EnsureSchemaAndCreateStore(string connectionString)
     {
         var services = new ServiceCollection();
         services.UseSqlServerStore(connectionString, options => options.EnableCleanup = false);

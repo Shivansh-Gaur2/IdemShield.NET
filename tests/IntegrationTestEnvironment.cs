@@ -1,4 +1,4 @@
-namespace IdemShield.Redis.Tests;
+namespace IdemShield.Tests;
 
 internal static class IntegrationTestEnvironment
 {

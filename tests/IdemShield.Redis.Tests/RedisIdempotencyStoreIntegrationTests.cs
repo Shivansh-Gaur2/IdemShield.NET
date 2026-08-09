@@ -1,4 +1,5 @@
 using IdemShield.AspNetCore;
+using IdemShield.Tests;
 using IdemShield.Redis;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
