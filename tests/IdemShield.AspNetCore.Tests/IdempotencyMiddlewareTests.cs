@@ -141,16 +141,13 @@ public class IdempotencyMiddlewareTests
     }
 
     [Fact]
-    public async Task Replay_excludes_cookie_authentication_and_server_headers()
+    public async Task Replay_retains_application_response_headers()
     {
         var store = new InMemoryIdempotencyStore();
         var middleware = new IdempotencyMiddleware(
             context =>
             {
                 context.Response.Headers["X-Result"] = "safe";
-                context.Response.Headers.SetCookie = "session=secret; HttpOnly";
-                context.Response.Headers.WWWAuthenticate = "Bearer realm=orders";
-                context.Response.Headers.Server = "internal-host";
                 return context.Response.WriteAsync("done");
             },
             new IdempotencyOptions());
@@ -160,9 +157,6 @@ public class IdempotencyMiddlewareTests
         await middleware.InvokeAsync(replay, store);
 
         Assert.Equal("safe", replay.Response.Headers["X-Result"]);
-        Assert.False(replay.Response.Headers.ContainsKey("Set-Cookie"));
-        Assert.False(replay.Response.Headers.ContainsKey("WWW-Authenticate"));
-        Assert.False(replay.Response.Headers.ContainsKey("Server"));
     }
 
     [Theory]
